@@ -7,5 +7,6 @@
 	- TODO: Try if you can convert your mobile phone into a peer.
 
 	**Implementation**
+
 		- For now I will implement peer's as just sockets which are bound to different ports on the 
 		same machine.
