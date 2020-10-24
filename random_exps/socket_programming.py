@@ -2,8 +2,8 @@ import socket, sys
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-MAX = 65535 # 64K ports
-PORT = int(sys.argv[2]) # Unique to each socket object
+MAX = 65535 # 64KB
+PORT = 1060 # Unique to each socket object
 
 if sys.argv[1] == 'server':
 	s.bind(('127.0.0.1', PORT))
@@ -15,9 +15,9 @@ if sys.argv[1] == 'server':
 
 
 if sys.argv[1] == 'client':
-	SEND_PORT = int(sys.argv[3])
+	s.connect(('127.0.0.1', PORT))
 	print(f"Address before sending: {s.getsockname()}")
-	s.sendto(f"Hello WOrld".encode(),('127.0.0.1',SEND_PORT))
+	s.send(f"Hello WOrld".encode())
 	print(f"Address after sending: {s.getsockname()}")
 	data, address = s.recvfrom(MAX)
 	print(f"The server {address} says {repr(data)}")
