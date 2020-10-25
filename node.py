@@ -37,15 +37,30 @@ class Node(threading.Thread):
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		self.sock.bind(self.hostname)
+		self.sock.listen(10)
 
 		""" Initialized Id """
 		self.id = datetime.strftime(datetime.now(), "%y%m%d_%H%M%S%f")
 		print(f"Created a peer with ID: {self.id}")
 
+		""" Connected Nodes is represented by a P2PCommunication instance initiated with that node """
+		self.connected_peers = []
+
 	def run(self):
 		"""
 			- This is the main function that will be executed on a thread.
+			- Waits for data to come and accepts the id of the node
 		"""
+
+		try:
+			client_sock, client_addr = self.sock.accept()
+			client_node_id = client_sock.recv(4096).decode()
+			client_sock.sendall(self.id.encode())
+			print(f"IDs exchanged with: {client_addr}")
+
+		except socket.timeout:
+			print(f"Connection timeout")
+
 		pass
 
 	def connect_to_node(self, host, port):
@@ -59,7 +74,8 @@ class Node(threading.Thread):
 			sock.sendall(self.id.encode())
 
 			target_node_id = sock.recv(4096)
+			print(f"IDs exchanged with: {(host,port)}")
 
 		except Exception as e:
-			print(f"There was an error connecting to ({host}, {port})")
+			print(e)
 		
