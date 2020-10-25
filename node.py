@@ -41,25 +41,34 @@ class Node(threading.Thread):
 
 		""" Initialized Id """
 		self.id = datetime.strftime(datetime.now(), "%y%m%d_%H%M%S%f")
-		print(f"Created a peer with ID: {self.id}")
+		self.printh(f"Created a peer with ID: {self.id}")
 
 		""" Connected Nodes is represented by a P2PCommunication instance initiated with that node """
 		self.connected_peers = []
+
+	def printh(self, message):
+		print(f"({self.hostname}): {message}")
 
 	def run(self):
 		"""
 			- This is the main function that will be executed on a thread.
 			- Waits for data to come and accepts the id of the node
+			- At the same time, sends its own id to the target node
+			- Creates a P2P channel with the target node
 		"""
 
 		try:
 			client_sock, client_addr = self.sock.accept()
 			client_node_id = client_sock.recv(4096).decode()
 			client_sock.sendall(self.id.encode())
-			print(f"IDs exchanged with: {client_addr}")
+			self.printh(f"IDs exchanged with: {client_addr}")
+
+			p2pchannel = P2PChannel(self, client_sock, client_node_id, *client_addr)
+			self.connected_peers.append(p2pchannel)
+			p2pchannel.start()
 
 		except socket.timeout:
-			print(f"Connection timeout")
+			self.printh(f"Connection timeout")
 
 		pass
 
@@ -73,9 +82,68 @@ class Node(threading.Thread):
 			sock.connect((host,port))
 			sock.sendall(self.id.encode())
 
-			target_node_id = sock.recv(4096)
-			print(f"IDs exchanged with: {(host,port)}")
+			target_node_id = sock.recv(4096).decode()
+			self.printh(f"IDs exchanged with: {(host,port)}")
+
+			p2pchannel = P2PChannel(self, sock, target_node_id, host, port)
+			self.connected_peers.append(p2pchannel)
+			p2pchannel.send_data("Hola")
 
 		except Exception as e:
-			print(e)
+			self.printh(e)
+
+
+class P2PChannel(threading.Thread):
+	"""
+		- This class represents a channel through which both the peers will exchanged data with each other.
+	"""
+
+	def __init__(self, main_node, target_sock, target_id, main_host, main_port):
+		"""
+			args:
+				main_node - The node that is being connected
+				target_sock - The socket object of target node
+				target_id - The id of the target node
+				main_host - hostname of the main node
+				main_port - the port of the main node
+		"""
 		
+		super(P2PChannel, self).__init__()
+
+		self.main_node = main_node
+		self.target_sock = target_sock
+		self.target_id = target_id
+		self.main_host = main_host
+		self.main_port = main_port
+
+		self.printh(f"Started P2P channel with node: {self.target_sock.getpeername()}")
+
+		self.end_byte = b"EOM\x01"
+
+	def printh(self,message):
+		print(f"({self.main_node.hostname})P2P: {message}")
+
+
+	def run(self):
+		"""
+			- This is thread loop where the node keeps waiting for the data to come.
+			- The message should have a stop byte, which is same for all the nodes.
+			- At the moment, this channel is not encrypted. 
+		"""
+		data = b""
+		message = b""
+		
+		while not data:
+			chunk = self.target_sock.recv(4096)
+			message += chunk
+			if self.end_byte in message:
+				data += message.rstrip(self.end_byte)
+		
+		data = data.decode()
+		self.printh(f"Message Recieved from {self.target_id}: {data}")
+		
+	def send_data(self,message):
+
+		message_ = message.encode() + self.end_byte
+		self.target_sock.sendall(message_)
+		self.printh(f"Message sent to {self.target_id}: {message}")
