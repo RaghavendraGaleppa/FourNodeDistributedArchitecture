@@ -23,6 +23,9 @@ class Peer(BaseModel):
 	hostaddr: str
 	port: str
 
+class PayloadId(BaseModel):
+	id: str
+
 def generate_hashes(payload_string):
 	"""
 		- The string will be split into a list of new strings with 4 characters each
@@ -103,6 +106,22 @@ async def upload_payload(str_payload: StringPayload):
 
 	conn.sadd('list:payloads', payloadId)
 	return {'payloadId':payloadId}
+
+@app.post("/get_payload/")
+async def get_payload(payload_id: PayloadId):
+
+	if not conn.sismember('list:payloads',payload_id.id):
+		return {'valid_payload': False}
+		
+	chunks = conn.hgetall(f'chunks:{payload_id.id}')
+	message = {"chunks": []}
+	for key, value in chunks.items():
+		message["chunks"].append(value.decode())
+
+	message["rootHash"] = conn.hget(f'hash:{payload_id.id}', 'rootHash').decode()
+	message["claimedString"] = conn.hget(f'hash:{payload_id.id}', 'claimedString').decode()
+	
+	return message
 
 @app.get("/get_peers/")
 async def get_peers():

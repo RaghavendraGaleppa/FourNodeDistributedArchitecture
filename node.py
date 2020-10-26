@@ -157,6 +157,28 @@ class Node(threading.Thread):
 		r = requests.get(f"{self.tracker}/get_peers")
 		return r.json()
 
+	def querry_payload(self, payloadId):
+		"""
+			- Create a post request with payloadId as data and get back the hashed chunks along with
+			full chunks
+		"""
+		if self.tracker is None:
+			raise Exception(f"No tracker is registered yet")
+		
+		message = {'id': payloadId}
+		r = requests.post(f"{self.tracker}/get_payload", json=message)
+		if r.status_code != 200:
+			raise Exception("There was an error at the server. The request was unsuccessfull")
+
+		response_data = r.json()
+		for c in response_data['chunks']:
+			self.printh(c)
+
+		print(" ")
+		self.printh(f"rootHASH: {response_data['rootHash']}")
+		self.printh(f"PAYLOAD: {response_data['claimedString']}")
+
+
 class P2PChannel(threading.Thread):
 	"""
 		- This class represents a channel through which both the peers will exchanged data with each other.
