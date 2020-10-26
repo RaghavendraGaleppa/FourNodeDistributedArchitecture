@@ -23,5 +23,5 @@
 	- [x] Send a payload string from a peer and get back the payloadId
 	- [x] API calls to register and querry for registered peers
 	- [x] Implement the hashing function that is required for the payload load string
-	- [] Implement the payload Querry API and test it.
-	
+	- [x] Implement the payload Querry API and test it.
+	- [] Create interface for a peer to querry with other peer about the chunk position
