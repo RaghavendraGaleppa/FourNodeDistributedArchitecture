@@ -100,6 +100,16 @@ class Node(threading.Thread):
 			self.printh(e)
 
 	def register_peer(self, api):
+		"""
+			- This function will register itself with the trusted server or the tracker
+		"""
+		message = {}
+		message['peer_id'] = self.id
+		message['hostaddr'] = self.host
+		message['port'] = self.port
+		r = requests.post(f'{api}', json=message)
+		print(r.text)
+
 
 class P2PChannel(threading.Thread):
 	"""
