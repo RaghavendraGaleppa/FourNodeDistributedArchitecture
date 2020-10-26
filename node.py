@@ -52,6 +52,10 @@ class Node(threading.Thread):
 		""" peer_list is dictionary with a key and value pair representing id and hostname respectively for the peer """
 		""" This peer_list will be updated every time the peer requests the server for a peer_list """   
 		self.peer_list = {}
+		
+
+		""" Keep track of all the payloads that have been sent to the server """
+		self.payload_sent = []
 
 		self.tracker = None
 
@@ -115,6 +119,8 @@ class Node(threading.Thread):
 		message['peer_id'] = self.id
 		message['hostaddr'] = self.host
 		message['port'] = self.port
+		if api[-1] == '/':
+			api = api[:-1]
 		r = requests.post(f'{api}/register', json=message)
 		if (r.status_code == 200):
 			self.printh(f"Sucessfully registered with tracker: {api}")
@@ -132,8 +138,8 @@ class Node(threading.Thread):
 		if r.status_code != 200:
 			raise Exception(f"There was an error while sending the payload string")
 
-		print(r.text)
-
+		if r.json['payloadId'] not in self.payload_sent:
+			self.payload_sent.append(r.json['payloadId'])
 
 class P2PChannel(threading.Thread):
 	"""
