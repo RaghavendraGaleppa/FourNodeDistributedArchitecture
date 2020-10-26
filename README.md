@@ -19,3 +19,9 @@
 
 	- Each peer reports itself to the server, and the server maintains a list of all the peers that have reported to it.
 
+
+### TODO:
+	- [x] Successfully test the api by sending a register post request to the server
+	- [] Implement the hashing function that is required for the payload load string
+	- [] Send a payload string from a peer and get back the payloadId
+	
