@@ -3,6 +3,7 @@ import threading
 import time # for sleep function
 from datetime import datetime # for creating timestamp as datetime
 import requests
+import json
 
 class Node(threading.Thread):
 	"""
@@ -47,6 +48,7 @@ class Node(threading.Thread):
 		""" Connected Nodes is represented by a P2PCommunication instance initiated with that node """
 		""" Key is peer id and value is the p2p object """
 		self.connected_peers = {}
+		self.live_channel = None # The channel through which the peer is currently communicating through
 
 		""" Each peer needs to ping the trusted server and get a list of other peers that are in contact with the server """
 		""" peer_list is dictionary with a key and value pair representing id and hostname respectively for the peer """
@@ -56,6 +58,7 @@ class Node(threading.Thread):
 
 		""" Keep track of all the payloads that have been sent to the server """
 		self.payload_sent = []
+		self.available_payloads = {}
 
 		self.tracker = None
 
@@ -100,7 +103,7 @@ class Node(threading.Thread):
 
 			p2pchannel = P2PChannel(self, sock, target_node_id, host, port)
 			self.connected_peers[target_node_id] = p2pchannel
-			p2pchannel.send_data("Hola")
+			self.live_channel = p2pchannel
 
 		except Exception as e:
 			self.printh(e)
@@ -147,6 +150,7 @@ class Node(threading.Thread):
 
 		if r.json()['payloadId'] not in self.payload_sent:
 			self.payload_sent.append(r.json()['payloadId'])
+			self.available_payloads[r.json()['payloadId']] = payload_string
 
 	def get_peers(self):
 		"""
@@ -169,16 +173,66 @@ class Node(threading.Thread):
 		r = requests.post(f"{self.tracker}/get_payload", json=message)
 		if r.status_code != 200:
 			raise Exception("There was an error at the server. The request was unsuccessfull")
-
+		else:
+			self.printh(f"Successfully Querry of {payloadId} to the server")
 		response_data = r.json()
-		for c in response_data['chunks']:
-			self.printh(c)
+		self.available_payloads[payloadId] = response_data['claimedString']
+		return response_data
 
-		print(" ")
-		self.printh(f"rootHASH: {response_data['rootHash']}")
-		self.printh(f"PAYLOAD: {response_data['claimedString']}")
+	def verify_payload(self, payloadId, positions:list = None):
+		"""
+			- This function initiate the communication between the nodes for the payload verification.
 
+			- positions represents the position of each chunk in the data. Leave it to None if you dont 
+			want to jumble up the position of chunks.
 
+			- example: positions = [1,0,3] will say that chunk 0 is at position 1, chunk 1 is at position 0 
+			and chunk 2 is at position 3
+		"""
+	
+		if payloadId not in self.available_payloads.keys():
+			raise Exception(f"Invalid Payload")
+		chunks = []
+		for i in range(0, len(self.available_payloads[payloadId]), 4):
+			chunks.append(self.available_payloads[payloadId][i:i+4])
+		
+		message = {}
+		message['claims'] = []
+		message['payloadId'] = f"{payloadId}"
+		if positions == None:
+			for i, chunk in enumerate(chunks):
+				message['claims'].append({'chunk':chunk, 'position': i})
+		else:
+			if len(positions) <= len(chunks):
+				for i, p in enumerate(positions):
+					message['claims'].append({'chunk':chunks[i], 'position': p})
+			else:
+				raise Exception(f"The lenght of list positions is larger than that of the chunks")
+
+		self.live_channel.send_data(json.dumps(message))
+
+	def parse_claims(self, data):
+		"""
+			- Get the payloadId and then retrieve that payload from the server
+			- get the chunked claimedString and then verify the data.
+			- return back the 
+
+		"""
+		data = json.loads(data)
+		payloadId = data['payloadId']
+		if payloadId not in self.available_payloads.keys():
+			return json.dumps({'chunk_available':False})
+
+		claimedString = self.available_payloads[payloadId]
+		chunks = [claimedString[i:i+4] for i in range(0, len(claimedString), 4)]
+
+		message = {}
+		message['results'] = []	
+		message['chunk_available'] = True
+		for claim in data['claims']:
+			message['results'].append(claimedString[claim['position']] == claim['chunk'])
+		return json.dumps(message)
+		
 class P2PChannel(threading.Thread):
 	"""
 		- This class represents a channel through which both the peers will exchanged data with each other.
@@ -226,12 +280,25 @@ class P2PChannel(threading.Thread):
 				data += message.rstrip(self.end_byte)
 		
 		data = data.decode()
-		self.printh(f"Message Recieved from {self.target_id}: {data}")
+		message = self.main_node.parse_claims(data)		
+		self.target_sock.sendall(message.encode() + self.end_byte)
+		self.target_sock.close()
 		
 	def send_data(self,message):
 
 		message_ = message.encode() + self.end_byte
 		self.target_sock.sendall(message_)
 		self.printh(f"Message sent to {self.target_id}: {message}")
+		response = b""
+		data = b""
+		while not response:
+			chunk = self.target_sock.recv(4096)
+			data += chunk
+			if self.end_byte in data:
+				response += data.rstrip(self.end_byte)
+
+		response = response.decode()
+		print(json.loads(response))
+		self.target_sock.close()
 
 
