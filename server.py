@@ -10,18 +10,17 @@ class StringPayload(BaseModel):
 class Peer(BaseModel):
 	peer_id: str
 	hostaddr: str
-	port: int
+	port: str
 
 app = FastAPI()
 
-@app.post("/register")
+@app.post("/register/")
 async def register_peer(peer: Peer):
 	print(Peer)
 	return {"message": "Successfully Registered"}
 
-@app.post("/")
-async def upload_payload(str_payload: StringPayload):
+@app.get("/")
+async def upload_payload():
 	# Save the payload onto the database and return the payload_id
-	
-	return str_payload
-
+		
+	return {'message':'heya'}
