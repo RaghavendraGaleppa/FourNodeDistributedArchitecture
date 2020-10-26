@@ -53,6 +53,8 @@ class Node(threading.Thread):
 		""" This peer_list will be updated every time the peer requests the server for a peer_list """   
 		self.peer_list = {}
 
+		self.tracker = None
+
 	def printh(self, message):
 		print(f"({self.hostname}): {message}")
 
@@ -102,12 +104,34 @@ class Node(threading.Thread):
 	def register_peer(self, api):
 		"""
 			- This function will register itself with the trusted server or the tracker
+
+			args:
+				api: str - this is the address to the api,
+				for example: http://127.0.0.1:8000/,
+							http://11.3.7.5,
+
 		"""
 		message = {}
 		message['peer_id'] = self.id
 		message['hostaddr'] = self.host
 		message['port'] = self.port
-		r = requests.post(f'{api}', json=message)
+		r = requests.post(f'{api}/register', json=message)
+		if (r.status_code == 200):
+			self.printh(f"Sucessfully registered with tracker: {api}")
+			self.tracker = api
+
+	def upload_payload(self, payload_string: str, desc:str =None):
+		if self.tracker is None:
+			raise Exception(f"No tracker is registered yet")
+		
+		message = {'payload':payload_string}
+		if desc is not None:
+			message['desc'] = desc
+
+		r = requests.post(f'{self.tracker}/upload_payload', json=message)
+		if r.status_code != 200:
+			raise Exception(f"There was an error while sending the payload string")
+
 		print(r.text)
 
 
