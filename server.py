@@ -31,6 +31,8 @@ def hasing_function(payload_string):
 
 
 def custom_encode(string_par):
+	if len(string_par) < 12:
+		string_par = string_par + ''.join([str(i) for i in range(12-len(string_par))])
 	x = [i for i in range(12)]
 	for i in range(len(string_par)):
 		x[i % len(x)] = x[i % len(x)] * ord(string_par[i])
@@ -58,5 +60,5 @@ async def upload_payload(str_payload: StringPayload):
 		Accept a payload string, hash it and return its payload Id
 	"""
 	payloadId = custom_encode(str_payload.payload)
-	return payloadId
+	return {'payloadId':payloadId}
 
