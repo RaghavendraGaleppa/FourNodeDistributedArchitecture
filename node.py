@@ -125,6 +125,7 @@ class Node(threading.Thread):
 		if (r.status_code == 200):
 			self.printh(f"Sucessfully registered with tracker: {api}")
 			self.tracker = api
+			print(r.text)
 
 	def upload_payload(self, payload_string: str, desc:str =None):
 		if self.tracker is None:
@@ -140,6 +141,16 @@ class Node(threading.Thread):
 
 		if r.json['payloadId'] not in self.payload_sent:
 			self.payload_sent.append(r.json['payloadId'])
+
+	def get_peers(self):
+		"""
+			- This function will return querry the tracker and return a list of all connected peers
+		"""
+		if self.tracker is None:
+			raise Exception(f"No tracker is registered yet")
+
+		r = requests.get(f"{self.tracker}/get_peers")
+		return r.json()
 
 class P2PChannel(threading.Thread):
 	"""
