@@ -22,6 +22,6 @@
 	- [x] Successfully test the api by sending a register post request to the server
 	- [x] Send a payload string from a peer and get back the payloadId
 	- [x] API calls to register and querry for registered peers
-	- [] Implement the hashing function that is required for the payload load string
-	- [] Implement Database structure with Redis
+	- [x] Implement the hashing function that is required for the payload load string
+	- [] Implement the payload Querry API and test it.
 	
