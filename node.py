@@ -45,7 +45,8 @@ class Node(threading.Thread):
 		self.printh(f"Created a peer with ID: {self.id}")
 
 		""" Connected Nodes is represented by a P2PCommunication instance initiated with that node """
-		self.connected_peers = []
+		""" Key is peer id and value is the p2p object """
+		self.connected_peers = {}
 
 		""" Each peer needs to ping the trusted server and get a list of other peers that are in contact with the server """
 		""" peer_list is dictionary with a key and value pair representing id and hostname respectively for the peer """
@@ -70,7 +71,7 @@ class Node(threading.Thread):
 			self.printh(f"IDs exchanged with: {client_addr}")
 
 			p2pchannel = P2PChannel(self, client_sock, client_node_id, *client_addr)
-			self.connected_peers.append(p2pchannel)
+			self.connected_peers[client_node_id] = p2pchannel
 			p2pchannel.start()
 
 		except socket.timeout:
@@ -92,15 +93,13 @@ class Node(threading.Thread):
 			self.printh(f"IDs exchanged with: {(host,port)}")
 
 			p2pchannel = P2PChannel(self, sock, target_node_id, host, port)
-			self.connected_peers.append(p2pchannel)
+			self.connected_peers[target_node_id] = p2pchannel
 			p2pchannel.send_data("Hola")
 
 		except Exception as e:
 			self.printh(e)
 
 	def register_peer(self, api):
-
-
 
 class P2PChannel(threading.Thread):
 	"""
