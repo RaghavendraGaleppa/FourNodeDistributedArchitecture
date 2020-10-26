@@ -130,3 +130,6 @@ dmypy.json
 
 # VIM TYPE
 *.swp
+
+# Redis database file
+*.rdb
