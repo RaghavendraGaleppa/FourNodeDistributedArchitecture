@@ -4,6 +4,7 @@ from typing import Optional, List
 from datetime import datetime
 
 import redis
+import hashlib
 
 app = FastAPI()
 conn = redis.StrictRedis(host='localhost', port=6379)
@@ -22,15 +23,20 @@ class Peer(BaseModel):
 	hostaddr: str
 	port: str
 
-def hasing_function(payload_string):
+def generate_hashes(payload_string):
 	"""
 		- The string will be split into a list of new strings with 4 characters each
 		- Each of those new strings will be hashed
 		- Every single hash of the new strings will be added and hashed together to
 		create a new hash string which will be returned along with the list of chunks
 	"""
-
-	pass
+	hashes = []
+	for i in range(0,len(payload_string), 4):
+		hash_ = hashlib.sha224(payload_string[i:i+4].encode()).hexdigest()
+		hashes.append(hash_)
+	
+	full_hash = hashlib.sha224(''.join(hashes).encode()).hexdigest()
+	return hashes, full_hash	
 
 
 def custom_encode(string_par):
@@ -69,9 +75,33 @@ async def register_peer(peer: Peer, request: Request):
 @app.post("/upload_payload/")
 async def upload_payload(str_payload: StringPayload):
 	"""
-		Accept a payload string, hash it and return its payload Id
+		- Accept a payload string, hash it and return its payload Id
+
+		- Check if the payload already exists in the database, if so then just return the payload Id. 
+		Check the set list:payloads for the list of payloads that have been uploaded to the trusted server.
+
+		- if the payload is not already present, then generate hash_chunks and full_hash for the payload.
+
+		- insert the chunked hashes into the chunks:payloadId hash. It is important to keep the order of the
+		chunks that occur in the payload string.
+
+		- Insert the full_hash, claimed string and chunksid into the hash:payloadId hash
+
 	"""
 	payloadId = custom_encode(str_payload.payload)
+	if conn.sismember('list:payloads', payloadId):
+		return {'payloadId':payloadId}
+
+	# Save the data as hashes
+	hash_chunks, full_hash = generate_hashes(str_payload.payload)
+	for i, h in enumerate(hash_chunks):
+		conn.hset(f'chunks:{payloadId}', f'{i}', h)
+	
+	conn.hset(f'hash:{payloadId}', 'rootHash', full_hash)
+	conn.hset(f'hash:{payloadId}', 'claimedString', str_payload.payload)
+	conn.hset(f'hash:{payloadId}', 'chunks', f'chunks:{payloadId}')
+
+	conn.sadd('list:payloads', payloadId)
 	return {'payloadId':payloadId}
 
 @app.get("/get_peers/")
@@ -81,3 +111,4 @@ async def get_peers():
 	for peer in connected_peers:
 		data[peer.decode()] = conn.hgetall(f"peer:{peer.decode()}")
 	return data
+

@@ -128,6 +128,9 @@ class Node(threading.Thread):
 			print(r.text)
 
 	def upload_payload(self, payload_string: str, desc:str =None):
+		"""
+			- This function is responsible for uploading the payload to the server
+		"""
 		if self.tracker is None:
 			raise Exception(f"No tracker is registered yet")
 		
@@ -138,9 +141,12 @@ class Node(threading.Thread):
 		r = requests.post(f'{self.tracker}/upload_payload', json=message)
 		if r.status_code != 200:
 			raise Exception(f"There was an error while sending the payload string")
+		else:
+			self.printh(f"Successfully upload payload")
+			self.printh(f"PayloadId: {r.json()['payloadId']}")
 
-		if r.json['payloadId'] not in self.payload_sent:
-			self.payload_sent.append(r.json['payloadId'])
+		if r.json()['payloadId'] not in self.payload_sent:
+			self.payload_sent.append(r.json()['payloadId'])
 
 	def get_peers(self):
 		"""
@@ -148,7 +154,6 @@ class Node(threading.Thread):
 		"""
 		if self.tracker is None:
 			raise Exception(f"No tracker is registered yet")
-
 		r = requests.get(f"{self.tracker}/get_peers")
 		return r.json()
 
