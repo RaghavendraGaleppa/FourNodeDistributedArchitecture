@@ -2,6 +2,7 @@ import socket
 import threading
 import time # for sleep function
 from datetime import datetime # for creating timestamp as datetime
+import requests
 
 class Node(threading.Thread):
 	"""
@@ -45,6 +46,11 @@ class Node(threading.Thread):
 
 		""" Connected Nodes is represented by a P2PCommunication instance initiated with that node """
 		self.connected_peers = []
+
+		""" Each peer needs to ping the trusted server and get a list of other peers that are in contact with the server """
+		""" peer_list is dictionary with a key and value pair representing id and hostname respectively for the peer """
+		""" This peer_list will be updated every time the peer requests the server for a peer_list """   
+		self.peer_list = {}
 
 	def printh(self, message):
 		print(f"({self.hostname}): {message}")
@@ -91,6 +97,9 @@ class Node(threading.Thread):
 
 		except Exception as e:
 			self.printh(e)
+
+	def register_peer(self, api):
+
 
 
 class P2PChannel(threading.Thread):
@@ -147,3 +156,5 @@ class P2PChannel(threading.Thread):
 		message_ = message.encode() + self.end_byte
 		self.target_sock.sendall(message_)
 		self.printh(f"Message sent to {self.target_id}: {message}")
+
+

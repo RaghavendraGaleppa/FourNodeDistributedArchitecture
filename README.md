@@ -12,5 +12,10 @@
 	- A socket bind represents that the peer is ready to accept connections (tcp handshake) at that port.
 	- A socket connect represents that the peer is ready to initiate the tcp handshake with the target peer.
 
+- Trusted Server (Tracker):
+	- The trusted server is an api through which each peer can querry it for different types of information.
+	- Peers can upload a payload string to the server through the API, and the server returs a payloadId back 
+	to the peer which is unique to that string
 
+	- Each peer reports itself to the server, and the server maintains a list of all the peers that have reported to id.
 
