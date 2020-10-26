@@ -22,6 +22,7 @@
 
 ### TODO:
 	- [x] Successfully test the api by sending a register post request to the server
+	- [x] Send a payload string from a peer and get back the payloadId
 	- [] Implement the hashing function that is required for the payload load string
-	- [] Send a payload string from a peer and get back the payloadId
+	- [] Implement Database structure with Redis
 	
