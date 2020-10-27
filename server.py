@@ -23,6 +23,12 @@ class Peer(BaseModel):
 	hostaddr: str
 	port: str
 
+	def __str__(self):
+		return ', '.join([self.peer_id, self.hostaddr, self.port])
+
+	def __repr__(self):
+		return ', '.join([self.peer_id, self.hostaddr, self.port])
+
 class PayloadId(BaseModel):
 	id: str
 
@@ -64,6 +70,12 @@ def get_id(payload_string):
 async def register_peer(peer: Peer, request: Request):
 	try:
 		if not conn.sismember("list:peers", f"{peer.peer_id}"):
+			peers_connected = conn.keys("peer:*")
+			for single_peer in peers_connected:
+				data = conn.hgetall(f"{single_peer.decode()}")
+				if data[b'hostaddr'].decode() == peer.hostaddr and data[b'port'].decode() == peer.port:
+					conn.delete(single_peer)
+					conn.srem("list:peers",single_peer.decode().split(':')[-1].encode())
 			conn.hset(f"peer:{peer.peer_id}", "hostaddr", f"{peer.hostaddr}")
 			conn.hset(f"peer:{peer.peer_id}", "port", f"{peer.port}")
 			conn.sadd(f"list:peers", f"{peer.peer_id}")
@@ -126,6 +138,7 @@ async def get_payload(payload_id: PayloadId):
 @app.get("/get_peers/")
 async def get_peers():
 	connected_peers = conn.smembers('list:peers')
+	print(connected_peers)
 	data = {}
 	for peer in connected_peers:
 		data[peer.decode()] = conn.hgetall(f"peer:{peer.decode()}")

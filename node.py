@@ -128,9 +128,8 @@ class Node(threading.Thread):
 			api = api[:-1]
 		r = requests.post(f'{api}/register', json=message)
 		if (r.status_code == 200):
-			self.printh(f"Sucessfully registered with tracker: {api}")
 			self.tracker = api
-			print(r.text)
+			self.printh(r.text)
 
 	def upload_payload(self, payload_string: str, desc:str =None):
 		"""
