@@ -4,15 +4,19 @@ import time
 print("CREATING PEERS")
 print("="*70)
 node_1 = node.Node('127.0.0.1', 1060)
+node_1.daemon = True
 node_1.start()
 time.sleep(0.5)
 node_2 = node.Node('127.0.0.1', 1061)
+node_2.daemon = True
 node_2.start()
 time.sleep(0.5)
 node_3 = node.Node('127.0.0.1', 1062)
+node_3.daemon = True
 node_3.start()
 time.sleep(0.5)
 node_4 = node.Node('127.0.0.1', 1063)
+node_4.daemon = True
 node_4.start()
 time.sleep(0.5)
 

@@ -73,20 +73,22 @@ class Node(threading.Thread):
 			- Creates a P2P channel with the target node
 		"""
 
-		try:
-			client_sock, client_addr = self.sock.accept()
-			client_node_id = client_sock.recv(4096).decode()
-			client_sock.sendall(self.id.encode())
-			self.printh(f"IDs exchanged with: {client_addr}")
+		while True:
+			try:
+				client_sock, client_addr = self.sock.accept()
+				client_node_id = client_sock.recv(4096).decode()
+				client_sock.sendall(self.id.encode())
+				self.printh(f"IDs exchanged with: {client_addr}")
 
-			p2pchannel = P2PChannel(self, client_sock, client_node_id, *client_addr)
-			self.connected_peers[client_node_id] = p2pchannel
-			p2pchannel.start()
+				p2pchannel = P2PChannel(self, client_sock, client_node_id, *client_addr)
+				self.connected_peers[client_node_id] = p2pchannel
+				p2pchannel.start()
+				p2pchannel.join()
 
-		except socket.timeout:
-			self.printh(f"Connection timeout")
+			except socket.timeout:
+				self.printh(f"Connection timeout")
 
-		pass
+			pass
 
 	def connect_to_node(self, host, port):
 		"""
