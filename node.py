@@ -131,6 +131,20 @@ class Node(threading.Thread):
 			self.tracker = api
 			self.printh(r.text)
 
+	def deregister_peer(self):
+		"""
+			- This function can be used in a way to tell that a peer is being deregistered right before
+			shutting down
+		"""
+		if self.tracker is None:
+			raise Exception(f"No tracker is registered yet")
+
+		message = {"peer_id": self.id, 'hostaddr': self.host, 'port': str(self.port)}
+		r = requests.delete(f"{self.tracker}/deregister", json=message)
+		if r.status_code == 200:
+			self.printh(r.text)
+
+
 	def upload_payload(self, payload_string: str, desc:str =None):
 		"""
 			- This function is responsible for uploading the payload to the server

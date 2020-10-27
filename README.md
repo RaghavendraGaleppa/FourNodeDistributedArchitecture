@@ -28,6 +28,7 @@
 	- [x] Make the threads daemon
 	- [x] A peer cannot accept a connection from other peer while it is in communication a previous peer (Implement using thread.join() call). This will work in convention with p2pchannels thread where the main peer thread will wait for p2pchannels thread to finish.
 	- [x] Make sure that each (host,port) combination is not repeated in the server for the list of peers connected to it.
+	- [x] Each peer needs to have a deregister function that will erase their entry from the peer list in the server
 	- [ ] Log all the activities/communications into a log file
 	- [ ] Each peer can be querried about their activity/logfile
 	- [ ] Each server activity must also be logged into a file or a database

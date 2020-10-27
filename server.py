@@ -144,3 +144,20 @@ async def get_peers():
 		data[peer.decode()] = conn.hgetall(f"peer:{peer.decode()}")
 	return data
 
+@app.delete("/deregister")
+async def deregister_peer(peer: Peer):
+	"""
+		- Check if the peer is there in the list of connected peers
+		- if so, then check for the host addr and port verification 
+		- if true then delete its entry from list of peers and also delete the peers hash
+	"""
+	connected_peers = conn.smembers('list:peers')
+	if f"{peer.peer_id}".encode() in connected_peers:
+		data = conn.hgetall(f"peer:{peer.peer_id}")
+		if data[b'hostaddr'].decode() == peer.hostaddr and data[b'port'].decode() == peer.port:
+			conn.delete('peer:{peer.peer_id}')
+			conn.srem('list:peers', f'{peer.peer_id}')
+			return {"message": "The Peer {peer.peer_id} has been successfully deregistered"}
+	else:
+		return {"message": "Peer not found"}
+	
