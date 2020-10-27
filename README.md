@@ -19,12 +19,12 @@
 	- Each peer reports itself to the server, and the server maintains a list of all the peers that have reported to it.
 
 ### TODO:
-	- [ X ] Successfully test the api by sending a register post request to the server
-	- [ X ] Send a payload string from a peer and get back the payloadId
-	- [ X ] API calls to register and querry for registered peers
-	- [ X ] Implement the hashing function that is required for the payload load string
-	- [ X ] Implement the payload Querry API and test it.
-	- [ X ] Create interface for a peer to querry with other peer about the chunk position
+	- [x] Successfully test the api by sending a register post request to the server
+	- [x] Send a payload string from a peer and get back the payloadId
+	- [x] API calls to register and querry for registered peers
+	- [x] Implement the hashing function that is required for the payload load string
+	- [x] Implement the payload Querry API and test it.
+	- [x] Create interface for a peer to querry with other peer about the chunk position
 	- [ ] Log all the activities/communications into a log file
 	- [ ] Each peer can be querried about their activity/logfile
 	- [ ] Each server activity must also be logged into a file or a database
