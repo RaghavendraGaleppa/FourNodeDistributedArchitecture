@@ -75,7 +75,7 @@ async def register_peer(peer: Peer, request: Request):
 				data = conn.hgetall(f"{single_peer.decode()}")
 				if data[b'hostaddr'].decode() == peer.hostaddr and data[b'port'].decode() == peer.port:
 					conn.delete(single_peer)
-					conn.srem("list:peers",single_peer.decode().split(':')[-1].encode())
+					conn.srem("list:peers",single_peer.decode().split(':')[-1])
 			conn.hset(f"peer:{peer.peer_id}", "hostaddr", f"{peer.hostaddr}")
 			conn.hset(f"peer:{peer.peer_id}", "port", f"{peer.port}")
 			conn.sadd(f"list:peers", f"{peer.peer_id}")
