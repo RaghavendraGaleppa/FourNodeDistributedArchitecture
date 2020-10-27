@@ -25,6 +25,8 @@
 	- [x] Implement the hashing function that is required for the payload load string
 	- [x] Implement the payload Querry API and test it.
 	- [x] Create interface for a peer to querry with other peer about the chunk position
+	- [x] Make the threads daemon
+	- [x] A peer cannot accept a connection from other peer while it is in communication a previous peer (Implement using thread.join() call). This will work in convention with p2pchannels thread where the main peer thread will wait for p2pchannels thread to finish.
 	- [ ] Log all the activities/communications into a log file
 	- [ ] Each peer can be querried about their activity/logfile
 	- [ ] Each server activity must also be logged into a file or a database
