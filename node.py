@@ -59,6 +59,7 @@ class Node(threading.Thread):
 		""" Setup the Socket """
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		#self.sock.settimeout(0.2)
 		self.sock.bind(self.hostname)
 		self.sock.listen(10)
 
@@ -83,6 +84,7 @@ class Node(threading.Thread):
 
 		self.tracker = None
 		self.stop_thread = 0
+		self._stop_event = threading.Event()
 
 		""" 
 			- Each peer will have different modes of severity which will be used for logging their data 
@@ -168,6 +170,8 @@ class Node(threading.Thread):
 
 		while True:
 			if self.stop_thread:
+				print("Thread Stopped")
+				self._stop_event.set()
 				break
 			try:
 				client_sock, client_addr = self.sock.accept()
@@ -177,15 +181,15 @@ class Node(threading.Thread):
 
 				p2pchannel = P2PChannel(self, client_sock, client_node_id, *client_addr)
 				self.connected_peers[client_node_id] = p2pchannel
-				p2pchannel.start()
-				p2pchannel.join(timeout=10)
+				self.live_channel = p2pchannel
+				self.live_channel.start()
+				self.live_channel.join()
 
 			except socket.timeout:
 				self.printh(f"Connection timeout")
 			except OSError:
 				self.printh(f"The socket has been shutdown")
 
-			pass
 
 	def connect_to_node(self, host, port):
 		"""
@@ -203,6 +207,7 @@ class Node(threading.Thread):
 			p2pchannel = P2PChannel(self, sock, target_node_id, host, port)
 			self.connected_peers[target_node_id] = p2pchannel
 			self.live_channel = p2pchannel
+			self.live_channel.start()
 			log_message = f"Connected to node: {(host, port)} with id: {target_node_id}"
 			self.log_activities(log_message, SEVERITY.CONNECT_TO_NODE.value)
 
@@ -299,7 +304,7 @@ class Node(threading.Thread):
 		else:
 			self.printh(f"Successfully Querry of {payloadId} to the server")
 			log_message = f"Got chunk hashes for {payloadId} from server {self.tracker}"
-			self.available_payloads(log_message, SEVERITY.QUERRY_PAYLOAD)
+			self.log_activities(log_message, SEVERITY.QUERRY_PAYLOAD)
 		response_data = r.json()
 		self.available_payloads[payloadId] = response_data['claimedString']
 		return response_data
@@ -336,7 +341,8 @@ class Node(threading.Thread):
 
 		log_message = f"Sending data to {self.live_channel.target_sock.getpeername()} ({self.live_channel.target_id}) to verify data"	
 		self.log_activities(log_message, SEVERITY.VERIFY_CLAIM)
-		self.live_channel.send_data(json.dumps(message))
+		data = self.live_channel.send_data(json.dumps(message))
+		return data
 
 	def parse_claims(self, data):
 		"""
@@ -352,12 +358,14 @@ class Node(threading.Thread):
 
 		claimedString = self.available_payloads[payloadId]
 		chunks = [claimedString[i:i+4] for i in range(0, len(claimedString), 4)]
+		#print(self.available_payloads[payloadId])
+		#print(data)
 
 		message = {}
 		message['results'] = []	
 		message['chunk_available'] = True
 		for claim in data['claims']:
-			message['results'].append(claimedString[claim['position']] == claim['chunk'])
+			message['results'].append(chunks[claim['position']] == claim['chunk'])
 
 		log_message = f"Parsing data recieved from {self.live_channel.target_sock.getpeername()} ({self.live_channel.target_id})"	
 		self.log_activities(log_message, SEVERITY.PARSE_CLAIM)
@@ -448,7 +456,7 @@ class P2PChannel(threading.Thread):
 		message = b""
 		
 		while not data:
-			chunk = self.target_sock.recv(4096)
+			chunk = self.target_sock.recv(10000)
 			message += chunk
 			if self.end_byte in message:
 				data += message.rstrip(self.end_byte)
@@ -456,13 +464,12 @@ class P2PChannel(threading.Thread):
 		data = data.decode()
 		message = self.main_node.parse_claims(data)		
 		self.target_sock.sendall(message.encode() + self.end_byte)
-		self.target_sock.close()
 		
 	def send_data(self,message):
 
 		message_ = message.encode() + self.end_byte
 		self.target_sock.sendall(message_)
-		self.printh(f"Message sent to {self.target_id}: {message}")
+		self.printh(f"Message sent to {self.target_id}")
 		response = b""
 		data = b""
 		while not response:
@@ -472,7 +479,8 @@ class P2PChannel(threading.Thread):
 				response += data.rstrip(self.end_byte)
 
 		response = response.decode()
-		print(json.loads(response))
-		self.target_sock.close()
+		#self.target_sock.close()
+		data = json.loads(response)
+		return data
 
 
