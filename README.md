@@ -30,5 +30,6 @@
 	- [x] Make sure that each (host,port) combination is not repeated in the server for the list of peers connected to it.
 	- [x] Each peer needs to have a deregister function that will erase their entry from the peer list in the server
 	- [ ] Log all the activities/communications into a log file
-	- [ ] Each peer can be querried about their activity/logfile
+	- [ ] Use counters for each of the peers to make sure all their activities are measured.
+	- [ ] Build functions for peers to querry them about their metrics of all the activities.
 	- [ ] Each server activity must also be logged into a file or a database

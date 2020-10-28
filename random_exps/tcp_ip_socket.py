@@ -4,7 +4,7 @@ import sys
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 HOST = sys.argv[-1] if len(sys.argv) == 3 else '127.0.0.1'
-PORT =1060
+PORT =1066
 
 def recv_all(sock, length):
 	data = ''

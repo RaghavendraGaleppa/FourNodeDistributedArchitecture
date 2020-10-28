@@ -5,6 +5,25 @@ from datetime import datetime # for creating timestamp as datetime
 import requests
 import json
 
+from enum import Enum
+import redis
+
+class SEVERITY(Enum):
+
+	# Activities/Communication with other peers
+	PEER_INTIALIZED = 8
+	VERIFY_CLAIM = 10
+	PARSE_CLAIM = 13
+	CONNECT_TO_NODE = 15
+
+	# Activities/Communication with the trusted server
+	UPLOAD_PAYLOAD = 20
+	QUERRY_PAYLOAD = 23
+	REGISTER_PEER = 25
+	DEREGISTER_PEER = 30
+	GET_PEERS = 33
+
+
 class Node(threading.Thread):
 	"""
 		- This class represents a peer. 
@@ -62,8 +81,67 @@ class Node(threading.Thread):
 
 		self.tracker = None
 
+		""" 
+			- Each peer will have different modes of severity which will be used for logging their data 
+			and keeping track of its activities/communications. Along with that each peer will get multiple 
+			counters for every activity that takes place. These counters will be saved in Redis and can be later 
+			querried. 
+		"""
+		self.conn = redis.StrictRedis()
+		self.trim = 100 # This will tell how many recent logs to keep. Set it as None to so that all logs will be kept
+		log_message = f"Peer initialized with id: {self.id}, listening at {self.hostname}"
+		self.log_activities(log_message, SEVERITY.PEER_INTIALIZED)
+		
+
+
 	def printh(self, message):
 		print(f"({self.hostname}): {message}")
+
+	def log_activities(self, message, severity_level):
+		"""
+			- A Peer can log activities based on whether they are commiunicating with the trusted server or 
+			another peer.
+
+			- All activities/communications with another peer will be saved into a Redis List with the key: 
+			p2p:host:port.peer_id:SEVERITY_LEVEL
+
+			- All activities/communications with the trusted server will be saved into a Redis List with key:
+			http:host:port.peer_id:SEVERITY_LEVEL
+
+			- Along with these lists, each peer with have its own counters for every severity level with key:
+			counter:host:port.peer_id:SEVERITY_LEVEL
+
+		"""
+
+		# Check if that severity_level exists
+		if isinstance(severity_level, SEVERITY):
+			severity_level = severity_level.value
+		try:
+			SEVERITY(severity_level)
+
+		except ValueError as e:
+			self.printh(f"The severity level {severity_level} does not exist. The message will not be logged")
+
+		
+		postfix = f"{self.host}:{self.port}.{self.id}:{SEVERITY(severity_level).name}"
+		counter_dest = f"counter:{postfix}"
+		destination = ""
+		if severity_level <= SEVERITY.CONNECT_TO_NODE.value:
+			destination = f"p2p:{postfix}"
+		else:
+			destination = f"http:{postfix}"
+		pipe = self.conn.pipeline()
+
+		# Log the message
+		timestamp = datetime.strftime(datetime.now(), "%y/%m/%d %H:%M:%S")
+		message = timestamp + message
+		pipe.lpush(destination, message)
+		if self.trim and isinstance(self.trim, int):
+			pipe.ltrim(destination, 0, self.trim)
+
+		# increase counters
+		pipe.incr(counter_dest)
+		pipe.execute()
 
 	def run(self):
 		"""
@@ -83,7 +161,7 @@ class Node(threading.Thread):
 				p2pchannel = P2PChannel(self, client_sock, client_node_id, *client_addr)
 				self.connected_peers[client_node_id] = p2pchannel
 				p2pchannel.start()
-				p2pchannel.join()
+				p2pchannel.join(timeout=10)
 
 			except socket.timeout:
 				self.printh(f"Connection timeout")
@@ -106,6 +184,8 @@ class Node(threading.Thread):
 			p2pchannel = P2PChannel(self, sock, target_node_id, host, port)
 			self.connected_peers[target_node_id] = p2pchannel
 			self.live_channel = p2pchannel
+			log_message = f"Connected to node: {(host, port)} with id: {target_node_id}"
+			self.log_activities(log_message, SEVERITY.CONNECT_TO_NODE.value)
 
 		except Exception as e:
 			self.printh(e)
@@ -130,6 +210,8 @@ class Node(threading.Thread):
 		if (r.status_code == 200):
 			self.tracker = api
 			self.printh(r.text)
+			log_message = f"Registered to tracker(trusted server): {self.tracker}"
+			self.log_activities(log_message, SEVERITY.REGISTER_PEER.value)
 
 	def deregister_peer(self):
 		"""
@@ -143,6 +225,9 @@ class Node(threading.Thread):
 		r = requests.delete(f"{self.tracker}/deregister", json=message)
 		if r.status_code == 200:
 			self.printh(r.text)
+			log_message = f"De-Registered with tracker(trusted server): {self.tracker}"
+			self.tracker = None
+			self.log_activities(log_message, SEVERITY.DEREGISTER_PEER.value)
 
 
 	def upload_payload(self, payload_string: str, desc:str =None):
@@ -162,6 +247,8 @@ class Node(threading.Thread):
 		else:
 			self.printh(f"Successfully upload payload")
 			self.printh(f"PayloadId: {r.json()['payloadId']}")
+			log_message = f"Uploaded payload: {r.json()['payloadId']} to server: {self.tracker}"
+			self.log_activities(log_message, SEVERITY.UPLOAD_PAYLOAD)
 
 		if r.json()['payloadId'] not in self.payload_sent:
 			self.payload_sent.append(r.json()['payloadId'])
@@ -174,6 +261,8 @@ class Node(threading.Thread):
 		if self.tracker is None:
 			raise Exception(f"No tracker is registered yet")
 		r = requests.get(f"{self.tracker}/get_peers")
+		log_message = f"Got the list of peers from server: {self.tracker}"
+		self.log_activities(log_message, SEVERITY.GET_PEERS)
 		return r.json()
 
 	def querry_payload(self, payloadId):
@@ -190,6 +279,8 @@ class Node(threading.Thread):
 			raise Exception("There was an error at the server. The request was unsuccessfull")
 		else:
 			self.printh(f"Successfully Querry of {payloadId} to the server")
+			log_message = f"Got chunk hashes for {payloadId} from server {self.tracker}"
+			self.available_payloads(log_message, SEVERITY.QUERRY_PAYLOAD)
 		response_data = r.json()
 		self.available_payloads[payloadId] = response_data['claimedString']
 		return response_data
@@ -224,6 +315,8 @@ class Node(threading.Thread):
 			else:
 				raise Exception(f"The lenght of list positions is larger than that of the chunks")
 
+		log_message = f"Sending data to {self.live_channel.target_sock.getpeername()} ({self.live_channel.target_id}) to verify data"	
+		self.log_activities(log_message, SEVERITY.VERIFY_CLAIM)
 		self.live_channel.send_data(json.dumps(message))
 
 	def parse_claims(self, data):
@@ -246,6 +339,9 @@ class Node(threading.Thread):
 		message['chunk_available'] = True
 		for claim in data['claims']:
 			message['results'].append(claimedString[claim['position']] == claim['chunk'])
+
+		log_message = f"Parsing data recieved from {self.live_channel.target_sock.getpeername()} ({self.live_channel.target_id})"	
+		self.log_activities(log_message, SEVERITY.PARSE_CLAIM)
 		return json.dumps(message)
 		
 class P2PChannel(threading.Thread):
