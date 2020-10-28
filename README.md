@@ -31,5 +31,6 @@
 	- [x] Each peer needs to have a deregister function that will erase their entry from the peer list in the server
 	- [x] Log all the activities/communications into a log file
 	- [x] Use counters for each of the peers to make sure all their activities are measured.
-	- [ ] Build functions for peers to querry them about their metrics of all the activities.
+	- [x] Build functions for peers to querry them about their metrics of all the activities.
+	- [x] Peer and socket shutdown functions need to be created
 	- [ ] Write proper simualtion code
