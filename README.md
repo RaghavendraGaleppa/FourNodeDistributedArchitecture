@@ -1,4 +1,5 @@
 # PowerloomAssignment
+Usage: ./run.sh
 
 - Peer (Node):
 	- A Peer is a unanimous node, which is independently in itself both client and server.

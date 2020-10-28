@@ -98,6 +98,8 @@ while True:
 		
 		print("="*80)
 		print()
+		active_peers.append(node_a)
+		active_peers.append(node_b)
 		time.sleep(2)
 
 	if action == SEVERITY.GET_PEERS:
