@@ -88,8 +88,10 @@ while True:
 				print(node_a.verify_payload(payloadId))
 			else:
 				print(f"Verifying in random order")
-				positions = list(range(len(node_a.available_payloads[payloadId]) // 4))
-				random.shuffle(positions)
+				positions = len(node_a.available_payloads[payloadId]) // 4
+				prefix, postfix = positions[:5], positions[5:]
+				random.shuffle(prefix)
+				positions = prefix + postfix
 				print(node_a.verify_payload(payloadId, positions))
 		except:
 			print(f"ERROR: WHILE VERIFYING DATA")
@@ -116,7 +118,7 @@ while True:
 		if len(peer.available_payloads) == 0:
 			peer.upload_payload(generate_random_payload())
 			print(f"No payload exists to querry, uploading a payload")
-		payloadId = peer.payload_sent[-1]
+		payloadId = list(peer.available_payloads.keys())[0]
 		dd = peer.querry_payload(payloadId)
 		print(f"claimedString: {dd['claimedString']}")
 		print(f"Root Hash: {dd['rootHash']}")
