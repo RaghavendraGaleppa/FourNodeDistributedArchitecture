@@ -11,7 +11,9 @@ import redis
 class SEVERITY(Enum):
 
 	# Activities/Communication with other peers
+	KILL = 7
 	PEER_INTIALIZED = 8
+	SHUTDOWN_SOCK = 9
 	VERIFY_CLAIM = 10
 	PARSE_CLAIM = 13
 	CONNECT_TO_NODE = 15
@@ -80,6 +82,7 @@ class Node(threading.Thread):
 		self.available_payloads = {}
 
 		self.tracker = None
+		self.stop_thread = 0
 
 		""" 
 			- Each peer will have different modes of severity which will be used for logging their data 
@@ -92,10 +95,21 @@ class Node(threading.Thread):
 		log_message = f"Peer initialized with id: {self.id}, listening at {self.hostname}"
 		self.log_activities(log_message, SEVERITY.PEER_INTIALIZED)
 		
-
+	
+	def shutdown(self):
+		self.sock.shutdown(socket.SHUT_RD)
+		self.sock.close()
+		log_message = f"Socket has been shutdown"
+		self.log_activities(log_message, SEVERITY.SHUTDOWN_SOCK)
 
 	def printh(self, message):
 		print(f"({self.hostname}): {message}")
+
+	def kill(self):
+		self.stop_thread = 1
+		self.shutdown()
+		log_message = f"Peer has been killed"
+		self.log_activities(log_message, SEVERITY.KILL)
 
 	def log_activities(self, message, severity_level):
 		"""
@@ -152,6 +166,8 @@ class Node(threading.Thread):
 		"""
 
 		while True:
+			if self.stop_thread:
+				break
 			try:
 				client_sock, client_addr = self.sock.accept()
 				client_node_id = client_sock.recv(4096).decode()
@@ -165,6 +181,8 @@ class Node(threading.Thread):
 
 			except socket.timeout:
 				self.printh(f"Connection timeout")
+			except OSError:
+				self.printh(f"The socket has been shutdown")
 
 			pass
 
@@ -343,6 +361,50 @@ class Node(threading.Thread):
 		log_message = f"Parsing data recieved from {self.live_channel.target_sock.getpeername()} ({self.live_channel.target_id})"	
 		self.log_activities(log_message, SEVERITY.PARSE_CLAIM)
 		return json.dumps(message)
+
+	def metrics(self, metric_type=None, ignore_id=False):
+		"""
+			- Get the metrics of the peer
+			- metric_type will correspond to the SEVERITY of each log
+			- you can either get metrics of peer of current id or get all the metrics of peer by the current hostname of all id's
+		"""
+
+		data = {}
+		if metric_type is None:
+			metric_type = list(SEVERITY)
+		else:
+			if not isinstance(metric_type, list):
+				metric_type = [metric_type]
+
+		for severity in metric_type:
+			name = ""
+			if isinstance(severity, SEVERITY):
+				name = severity.name
+
+			elif isinstance(severity, int):
+				name = SEVERITY(severity).name
+
+			else:
+				raise ValueError("Invalid metric_type, it can either be int, list or instance of SEVERITY")
+
+			data[name] = []
+			prefix = f"counter:{self.host}:{self.port}"
+			if ignore_id:
+				prefix = f"{prefix}.*:{name}"
+			else:
+				prefix = f"{prefix}.{self.id}:{name}"
+
+			keys = self.conn.keys(prefix)
+			for k in keys:
+				data[name].append(int(self.conn.get(k).decode()))
+
+			for k in data.keys():
+				try:
+						data[k] = sum(data[k])
+				except:
+					pass
+
+		return data
 		
 class P2PChannel(threading.Thread):
 	"""
