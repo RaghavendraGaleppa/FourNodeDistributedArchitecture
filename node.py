@@ -107,6 +107,7 @@ class Node(threading.Thread):
 
 	def kill(self):
 		self.stop_thread = 1
+		self.deregister_peer()
 		self.shutdown()
 		log_message = f"Peer has been killed"
 		self.log_activities(log_message, SEVERITY.KILL)
@@ -237,7 +238,7 @@ class Node(threading.Thread):
 			shutting down
 		"""
 		if self.tracker is None:
-			raise Exception(f"No tracker is registered yet")
+			self.printh(f"The peer is not registered with any tracker")
 
 		message = {"peer_id": self.id, 'hostaddr': self.host, 'port': str(self.port)}
 		r = requests.delete(f"{self.tracker}/deregister", json=message)
