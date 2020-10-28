@@ -33,4 +33,4 @@
 	- [x] Use counters for each of the peers to make sure all their activities are measured.
 	- [x] Build functions for peers to querry them about their metrics of all the activities.
 	- [x] Peer and socket shutdown functions need to be created
-	- [ ] Write proper simualtion code
+	- [x] Write proper simualtion code
