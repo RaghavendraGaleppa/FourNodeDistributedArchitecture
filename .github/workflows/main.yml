@@ -40,5 +40,5 @@ jobs:
       - name: Redis ${{ matrix.redis }} on ${{ matrix.os }}
         uses: shogo82148/actions-setup-redis@v1
         with:
-		  redis-version: ${{ matrix.redis }}
-		  auto-start: "false"
+          redis-version: ${{ matrix.redis }}
+          auto-start: "false"
