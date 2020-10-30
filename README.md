@@ -35,3 +35,7 @@ Usage: ./run.sh
 	- [x] Build functions for peers to querry them about their metrics of all the activities.
 	- [x] Peer and socket shutdown functions need to be created
 	- [x] Write proper simualtion code
+	- [X] Pre-deadline last commit: 7385171 (no alphabets in this hash)
+
+	# POST DEADLINE FIXES:
+	- [X] Error: pyaloadId missing
