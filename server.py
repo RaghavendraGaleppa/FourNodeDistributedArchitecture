@@ -5,8 +5,13 @@ from datetime import datetime
 
 import redis
 import hashlib
+import uvicorn
+import logging
 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 app = FastAPI()
+app.logger = logger
 conn = redis.StrictRedis(host='localhost', port=6379)
 
 class StringPayload(BaseModel):
@@ -161,3 +166,5 @@ async def deregister_peer(peer: Peer):
 	else:
 		return {"message": "Peer not found"}
 	
+if __name__ == "__main__":	
+	uvicorn.run(app, port=8000)
