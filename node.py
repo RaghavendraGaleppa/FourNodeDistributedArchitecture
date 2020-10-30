@@ -352,6 +352,8 @@ class Node(threading.Thread):
 
 		"""
 		data = json.loads(data)
+		if 'payloadId' not in data.keys():
+			return 'Corrupted Data recieved: ' + json.dumps(data)
 		payloadId = data['payloadId']
 		if payloadId not in self.available_payloads.keys():
 			return json.dumps({'chunk_available':False})

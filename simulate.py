@@ -35,7 +35,7 @@ active_peers = [node_1, node_2, node_3, node_4]
 
 vocabulary = string.printable
 def generate_random_payload():
-	textlen = random.choice(range(100,500))
+	textlen = random.choice(range(32,100))
 
 	# generate random strings
 	payload_l = [random.choice(vocabulary) for i in range(textlen)]
@@ -82,19 +82,16 @@ while True:
 		
 		print(f"Using payload: {payloadId} for verifying chunks")
 		node_a.connect_to_node(node_b.host, node_b.port)
-		try:
-			if random.choice([0,1]) == 0:
-				print(f"Verifying in proper order")
-				print(node_a.verify_payload(payloadId))
-			else:
-				print(f"Verifying in random order")
-				positions = len(node_a.available_payloads[payloadId]) // 4
-				prefix, postfix = positions[:5], positions[5:]
-				random.shuffle(prefix)
-				positions = prefix + postfix
-				print(node_a.verify_payload(payloadId, positions))
-		except:
-			print(f"ERROR: WHILE VERIFYING DATA")
+		if random.choice([0,1]) == 0:
+			print(f"Verifying in proper order")
+			print(node_a.verify_payload(payloadId))
+		else:
+			print(f"Verifying in random order")
+			positions = list(range(len(node_a.available_payloads[payloadId]) // 4))
+			prefix, postfix = positions[:5], positions[5:]
+			random.shuffle(prefix)
+			positions = prefix + postfix
+			print(node_a.verify_payload(payloadId, positions))
 
 		#node_a.live_channel.join()
 		
