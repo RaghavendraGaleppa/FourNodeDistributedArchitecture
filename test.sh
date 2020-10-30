@@ -5,4 +5,4 @@ killall -9 python3
 
 redis-server 
 uvicorn server:app --reload
-python3 verify_payload
+python3 verify_payload.py
