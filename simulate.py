@@ -33,7 +33,7 @@ actions_list = list(node.SEVERITY)
 
 active_peers = [node_1, node_2, node_3, node_4]
 
-vocabulary = string.printable
+vocabulary = string.ascii_letters + string.digits
 def generate_random_payload():
 	textlen = random.choice(range(32,100))
 
@@ -104,7 +104,9 @@ while True:
 	if action == SEVERITY.GET_PEERS:
 		print(f"Get peer list from the sever")
 		peer = random.choice(active_peers)
-		print(peer.get_peers())
+		data = peer.get_peers()
+		for p in data:
+			print(p, data[p])
 		print("="*80)
 		print()
 		time.sleep(2)
