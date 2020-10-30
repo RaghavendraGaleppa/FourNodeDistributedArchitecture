@@ -60,7 +60,7 @@ while True:
 	if action == SEVERITY.KILL:
 		node_a = active_peers.pop()
 		node_a.kill()
-		print(f"Killing the node: node_a.hostname")
+		print(f"Killing the node: {node_a.hostname}")
 		print("="*80)
 		print()
 		time.sleep(2)
