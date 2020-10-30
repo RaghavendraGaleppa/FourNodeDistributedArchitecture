@@ -31,3 +31,6 @@ jobs:
         run: |
             pip3 install -r requirements.txt
             ./test.sh
+            redis-server &
+            uvicorn server:app --reload
+            python3 ./verify_payload.py
