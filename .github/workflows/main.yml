@@ -37,3 +37,11 @@ jobs:
             ./test.sh
             uvicorn server:app --reload
             python3 ./verify_payload.py
+      - name: Redis ${{ matrix.redis }} on ${{ matrix.os }}
+        steps:
+          - uses: actions/checkout@v2
+          - name: Setup redis
+            uses: shogo82148/actions-setup-redis@v1
+            with:
+              redis-version: ${{ matrix.redis }}
+              auto-start: "false"
