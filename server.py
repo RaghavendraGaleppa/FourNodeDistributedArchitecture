@@ -84,6 +84,7 @@ async def register_peer(peer: Peer, request: Request):
 			conn.hset(f"peer:{peer.peer_id}", "hostaddr", f"{peer.hostaddr}")
 			conn.hset(f"peer:{peer.peer_id}", "port", f"{peer.port}")
 			conn.sadd(f"list:peers", f"{peer.peer_id}")
+			print(f"User ip: {request.client.host}")
 		else:
 			return {"message": "Peer already registered"}
 	except Exception as e:
