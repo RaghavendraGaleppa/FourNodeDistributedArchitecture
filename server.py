@@ -157,7 +157,7 @@ async def deregister_peer(peer: Peer):
 		if data[b'hostaddr'].decode() == peer.hostaddr and data[b'port'].decode() == peer.port:
 			conn.delete('peer:{peer.peer_id}')
 			conn.srem('list:peers', f'{peer.peer_id}')
-			return {"message": "The Peer {peer.peer_id} has been successfully deregistered"}
+			return {"message": f"The Peer {peer.peer_id} has been successfully deregistered"}
 	else:
 		return {"message": "Peer not found"}
 	
