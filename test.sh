@@ -12,4 +12,4 @@ make install
 
 redis-server 
 uvicorn server:app --reload
-python3 verify_payload.py
+python3 ./verify_payload.py
