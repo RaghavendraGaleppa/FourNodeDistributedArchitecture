@@ -166,5 +166,3 @@ async def deregister_peer(peer: Peer):
 	else:
 		return {"message": "Peer not found"}
 	
-if __name__ == "__main__":	
-	uvicorn.run(app, port=8000)
