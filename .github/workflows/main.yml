@@ -27,10 +27,13 @@ jobs:
         run: echo Hello, world!
 
       # Runs a set of commands using the runners shell
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.1.0
+        with:
+          redis-version: ${{ matrix.redis-version }}
       - name: Run a multi-line script
         run: |
             pip3 install -r requirements.txt
             ./test.sh
-            redis-server &
             uvicorn server:app --reload
             python3 ./verify_payload.py
