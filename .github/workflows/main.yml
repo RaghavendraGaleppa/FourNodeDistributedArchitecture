@@ -13,43 +13,19 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  container-job:
-    # Containers must run in Linux based operating systems
-    runs-on: ubuntu-latest
-    # Docker Hub image that `container-job` executes in
-    container: node:10.18-jessie
-
-    # Service containers to run with `container-job`
-    services:
-      # Label used to access the service container
-      redis:
-        # Docker Hub image
-        image: redis
-        # Set health checks to wait until redis has started
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-    # Steps represent a sequence of tasks that will be executed as part of the job
+  build-job:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
       - name: Install dependencies
         run: pip3 install -r requirements.txt
+      - uses: zhulik/redis-action@1.1.0
+        with:
+          redis version: '5'
+          number of databases: 100
 
       - name: Run servers
         run: |
           export PYTHONPATH=src
           python3 src/server.py
           pytest
-        env:
-        # The hostname used to communicate with the Redis service container
-        REDIS_HOST: redis
-        # The default Redis port
-        REDIS_PORT: 6379
-        # For pytest
-        PYTHONPATH: src
