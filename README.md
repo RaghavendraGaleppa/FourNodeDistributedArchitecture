@@ -1,5 +1,6 @@
 # PowerloomAssignment
-Usage: redis-server &;
+Usage: export PYTHONPATH=src; 
+redis-server &;
 python3 src/server.py &;
 python3 simulate.py;
 
