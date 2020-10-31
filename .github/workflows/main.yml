@@ -31,7 +31,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-		ports:
+        ports:
           - 6379:6379
     steps:
       # The type of runner that the job will run on
