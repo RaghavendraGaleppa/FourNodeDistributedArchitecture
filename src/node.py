@@ -114,6 +114,15 @@ class Node(threading.Thread):
 		log_message = f"Peer has been killed"
 		self.log_activities(log_message, SEVERITY.KILL)
 
+	@classmethod
+	def _build_and_run(cls, server="127.0.0.1", port=1060,
+			tracker="http://127.0.0.1:8000"):
+		node = cls(server, port)
+		node.daemon = True
+		node.start()
+		node.register_peer(tracker)
+		return node
+
 	def log_activities(self, message, severity_level):
 		"""
 			- A Peer can log activities based on whether they are commiunicating with the trusted server or 

@@ -2,15 +2,9 @@ from node import Node
 
 def test_f():
 	print("Started testing")
-	a = Node('127.0.0.1',1060)
-	a.daemon = True
-	a.start()
-	a.register_peer('http://127.0.0.1:8000')
+	a = Node._build_and_run(port=1060)
 
-	b = Node('127.0.0.1',1061)
-	b.daemon = True
-	b.start()
-	b.register_peer('http://127.0.0.1:8000')
+	b = Node._build_and_run(port=1061)
 
 	b.upload_payload('asdasdabsfaksjdas')
 	a.querry_payload(b.payload_sent[-1])
