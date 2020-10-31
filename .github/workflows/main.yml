@@ -48,8 +48,8 @@ jobs:
         - name: Run servers
           run: |
               export PYTHONPATH=src
-			  python3 src/server.py
-			  pytest
+              python3 src/server.py
+              pytest
           env:
             # The hostname used to communicate with the Redis service container
             REDIS_HOST: redis
