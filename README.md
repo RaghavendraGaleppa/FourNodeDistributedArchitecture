@@ -40,5 +40,7 @@ Usage: ./run.sh
 	# POST DEADLINE FIXES:
 	- [x] Error: pyaloadId missing
 	- [x] Reorganize folder into tests and src folder
-	- [ ] Integrate github actions 
+	- [x] Integrate github actions.
+	- [x] Fully integrated and tested all kinds of actions for both peers and server using github actions. If any error comes up after 
+	commits, it will be caught.
 
