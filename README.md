@@ -38,4 +38,7 @@ Usage: ./run.sh
 	- [X] Pre-deadline last commit: 7385171 (no alphabets in this hash)
 
 	# POST DEADLINE FIXES:
-	- [X] Error: pyaloadId missing
+	- [x] Error: pyaloadId missing
+	- [x] Reorganize folder into tests and src folder
+	- [ ] Integrate github actions 
+
