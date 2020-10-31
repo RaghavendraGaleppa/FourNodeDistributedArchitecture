@@ -108,7 +108,7 @@ class Node(threading.Thread):
 		print(f"({self.hostname}): {message}")
 
 	def kill(self):
-		self.stop_thread = 1
+		self._stop_event.set()
 		self.deregister_peer()
 		self.shutdown()
 		log_message = f"Peer has been killed"
@@ -168,11 +168,7 @@ class Node(threading.Thread):
 			- Creates a P2P channel with the target node
 		"""
 
-		while True:
-			if self.stop_thread:
-				print("Thread Stopped")
-				self._stop_event.set()
-				break
+		while not self._stop_event.wait(0.1):
 			try:
 				client_sock, client_addr = self.sock.accept()
 				client_node_id = client_sock.recv(4096).decode()
@@ -207,7 +203,7 @@ class Node(threading.Thread):
 			p2pchannel = P2PChannel(self, sock, target_node_id, host, port)
 			self.connected_peers[target_node_id] = p2pchannel
 			self.live_channel = p2pchannel
-			self.live_channel.start()
+			#self.live_channel.start()
 			log_message = f"Connected to node: {(host, port)} with id: {target_node_id}"
 			self.log_activities(log_message, SEVERITY.CONNECT_TO_NODE.value)
 

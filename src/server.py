@@ -168,4 +168,4 @@ async def deregister_peer(peer: Peer):
 		return {"message": "Peer not found"}
 	
 if __name__ == "__main__":
-	unvicorn("server:app", port=8000)
+	uvicorn.run("server:app", port=8000)
