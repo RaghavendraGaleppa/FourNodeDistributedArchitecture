@@ -28,5 +28,5 @@ jobs:
       - name: Run servers
         run: |
           export PYTHONPATH=src
-          python3 src/server.py
+          python3 src/server.py &
           pytest
