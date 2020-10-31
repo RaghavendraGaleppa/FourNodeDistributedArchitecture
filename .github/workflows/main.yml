@@ -29,4 +29,5 @@ jobs:
         run: |
           export PYTHONPATH=src
           python3 src/server.py &
+          pip3 install pytest
           pytest
