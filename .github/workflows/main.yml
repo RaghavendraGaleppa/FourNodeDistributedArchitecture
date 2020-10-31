@@ -43,7 +43,7 @@ jobs:
 
       - name: Run servers
         run: |
-      	  export PYTHONPATH=src
+          export PYTHONPATH=src
       	  python3 src/server.py
       	  pytest
         env:
@@ -52,4 +52,4 @@ jobs:
       	# The default Redis port
       	REDIS_PORT: 6379
       	# For pytest
-      	PYTHONPATH: src
+        PYTHONPATH: src
