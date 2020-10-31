@@ -1,5 +1,7 @@
 # PowerloomAssignment
-Usage: ./run.sh
+Usage: redis-server & 
+python3 src/server.py &
+python3 simulate.py
 
 - Peer (Node):
 	- A Peer is a unanimous node, which is independently in itself both client and server.
