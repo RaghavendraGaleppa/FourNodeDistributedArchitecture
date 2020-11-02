@@ -99,7 +99,20 @@ class Node(threading.Thread):
 		
 	
 	def shutdown(self):
-		#self.sock.shutdown(socket.SHUT_RD)
+		try:
+			""" 
+				- Each socket can be forcefully shutdown before closing it 
+				- Now you can shutdown incoming read operations
+				- You can also shutdown outgoing write operations
+
+				- If the socket has not been connected to any other socket (accept connections),
+				it will throw error when trying to shutdown read operations. The C library terms it as
+				ENOTCONN error and will return -1. In python it will throw the OSError.
+			"""
+
+			self.sock.shutdown(socket.SHUT_RDWR)
+		except OSError:
+			self.printh("The socket has not connected to any other socket, cannot shutdown read operations")
 		self.sock.close()
 		log_message = f"Socket has been shutdown"
 		self.log_activities(log_message, SEVERITY.SHUTDOWN_SOCK)
