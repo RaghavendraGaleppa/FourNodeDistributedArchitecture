@@ -99,7 +99,7 @@ class Node(threading.Thread):
 		
 	
 	def shutdown(self):
-		self.sock.shutdown(socket.SHUT_RD)
+		#self.sock.shutdown(socket.SHUT_RD)
 		self.sock.close()
 		log_message = f"Socket has been shutdown"
 		self.log_activities(log_message, SEVERITY.SHUTDOWN_SOCK)
